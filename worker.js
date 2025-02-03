@@ -19,18 +19,20 @@ export default {
 
     // Verify API key
     const apiKey = request.headers.get("X-API-Key");
-    if (!apiKey) {
-      return new Response("Missing API key", {
-        status: 401,
-        headers: corsHeaders,
-      });
-    }
+    const validApiKey = env.API_KEY;
 
-    if (apiKey !== env.API_KEY) {
-      return new Response("Invalid API key", {
-        status: 401,
-        headers: corsHeaders,
-      });
+    // Only validate API key if it's set in the environment
+    if (validApiKey && (!apiKey || apiKey !== validApiKey)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid or missing API key" }),
+        {
+          status: 401,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
     }
 
     const url = new URL(request.url);

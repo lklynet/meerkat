@@ -13,11 +13,6 @@ console.log("API_KEY is placeholder:", API_KEY === "__API_KEY__");
 
 // Helper function for API calls
 async function fetchAPI(endpoint, options = {}) {
-  if (!API_KEY || API_KEY === "__API_KEY__") {
-    console.error("API key is not properly configured");
-    throw new Error("API key is not properly configured");
-  }
-
   const headers = {
     "X-API-Key": API_KEY,
     "Content-Type": "application/json",
@@ -31,7 +26,9 @@ async function fetchAPI(endpoint, options = {}) {
     });
 
     if (response.status === 401) {
-      throw new Error("Invalid API key");
+      throw new Error(
+        "API key validation failed. Please check your configuration."
+      );
     }
 
     if (!response.ok) {
