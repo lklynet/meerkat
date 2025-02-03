@@ -34,7 +34,6 @@
         color: #abb2bf !important;
         word-wrap: break-word !important;
         white-space: pre-wrap !important;
-        overflow-x: hidden !important;
       }
       .CodeMirror-gutters {
         background-color: rgb(31 41 55) !important;
@@ -209,10 +208,10 @@ console.log('Hello, world!');
       </div>
       <div
         id="preview-container"
-        class="px-6 h-[calc(100vh-50px)] overflow-y-auto text-sm max-w-full overflow-x-hidden"
+        class="px-6 h-[calc(100vh-50px)] overflow-y-auto text-sm max-w-full"
         style="display: none"
       >
-        <div id="preview" class="prose prose-invert max-w-none break-words whitespace-pre-wrap"></div>
+        <div id="preview" class="prose prose-invert max-w-none"></div>
       </div>
     </div>
 
