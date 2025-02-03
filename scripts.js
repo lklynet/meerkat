@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const textArea = document.getElementById("editor");
   editor = CodeMirror.fromTextArea(textArea, {
     mode: "markdown",
-    theme: "monokai",
+    theme: "one-dark",
     lineNumbers: true,
     lineWrapping: true,
     autofocus: true,

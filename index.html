@@ -24,18 +24,28 @@
 
     <!-- CodeMirror -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/markdown/markdown.min.js"></script>
+    <style>
+      .CodeMirror {
+        background-color: rgb(31 41 55) !important;
+        height: 100% !important;
+      }
+      .CodeMirror-gutters {
+        background-color: rgb(31 41 55) !important;
+        border-right: 1px solid rgb(75 85 99) !important;
+      }
+    </style>
   </head>
   <body
-    class="flex flex-col md:flex-row h-screen overflow-hidden font-mono rounded bg-neutral-900 text-neutral-200 text-sm"
+    class="flex flex-col md:flex-row h-screen overflow-hidden font-mono rounded bg-gray-900 text-gray-300 text-sm"
   >
     <div
       id="sidebar"
-      class="md:w-72 w-full md:max-w-sm bg-neutral-800 flex flex-col overflow-hidden resize-x p-2 box-border"
+      class="md:w-72 w-full md:max-w-sm bg-gray-900 flex flex-col overflow-hidden resize-x p-2 box-border"
     >
-      <div class="flex items-center p-2 bg-neutral-800 box-border">
+      <div class="flex items-center p-2 bg-gray-900 box-border">
         <div
           class="flex-grow text-center text-md font-bold cursor-pointer"
           onclick="window.location.href='https://lkly.net';"
@@ -45,11 +55,11 @@
       </div>
       <div
         id="markdown-guide-container"
-        class="flex-grow overflow-y-auto bg-neutral-800"
+        class="flex-grow overflow-y-auto bg-neutral-900"
       >
         <div
           id="markdown-guide"
-          class="p-2 bg-neutral-900 text-neutral-200 rounded leading-relaxed break-words"
+          class="p-2 bg-gray-800 rounded leading-relaxed break-words"
         >
           <h2 class="text-lg font-bold mb-2">Markdown Guide</h2>
           <h3 class="font-semibold mt-4 mb-1">Headers</h3>
@@ -102,40 +112,40 @@ console.log('Hello, world!');
         </div>
       </div>
       <div
-        class="sidebar-buttons flex flex-wrap gap-2 p-2 bg-neutral-800 sticky bottom-0"
+        class="sidebar-buttons flex flex-wrap gap-2 p-2 bg-gray-900 sticky bottom-0"
       >
         <button
           id="new-note"
-          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-neutral-700 text-neutral-100 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-red-500"
+          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-gray-700 text-gray-300 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-gray-600"
         >
           <i class="fas fa-plus-square"></i> New
         </button>
         <button
           id="copy-link"
-          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-neutral-700 text-neutral-100 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-red-500"
+          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-gray-700 text-gray-300 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-gray-600"
         >
           <i class="fas fa-link"></i> Copy Link
         </button>
         <button
           id="clone-note"
-          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-neutral-700 text-neutral-100 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-red-500"
+          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-gray-700 text-gray-300 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-gray-600"
         >
           <i class="fas fa-clone"></i> Clone
         </button>
         <button
           id="delete-note"
-          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-neutral-700 text-neutral-100 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-red-500"
+          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-gray-700 text-gray-300 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-gray-600"
         >
           <i class="fas fa-trash"></i> Delete
         </button>
         <button
           id="export-note"
-          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-neutral-700 text-neutral-100 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-red-500"
+          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-gray-700 text-gray-300 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-gray-600"
         >
           <i class="fas fa-download"></i> Export
         </button>
         <button
-          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-neutral-700 text-neutral-100 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-red-500"
+          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-gray-700 text-gray-100 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-pink-600"
         >
           <a href="https://buymeacoffee.com/lkly" target="_blank"
             >Buy me a coffee! ☕</a
@@ -150,7 +160,7 @@ console.log('Hello, world!');
       class="flex-grow flex flex-col transition-width duration-300 ease-in-out"
     >
       <div
-        class="top-bar flex justify-end items-center p-2 bg-neutral-800 relative"
+        class="top-bar flex justify-end items-center p-2 bg-gray-900 relative"
       >
         <span
           id="save-status"
@@ -158,27 +168,27 @@ console.log('Hello, world!');
         ></span>
         <button
           id="edit-button"
-          class="bg-neutral-700 text-neutral-200 border border-neutral-600 rounded px-2 py-1 ml-2 cursor-pointer text-xs hover:bg-neutral-600"
+          class="bg-gray-700 text-gray-100 border border-gray-600 rounded px-2 py-1 ml-2 cursor-pointer text-xs hover:bg-gray-600"
           style="display: none"
         >
           Edit
         </button>
         <button
           id="preview-button"
-          class="bg-neutral-700 text-neutral-200 border border-neutral-600 rounded px-2 py-1 ml-2 cursor-pointer text-xs hover:bg-neutral-600"
+          class="bg-gray-700 text-gray-100 border border-gray-600 rounded px-2 py-1 ml-2 cursor-pointer text-xs hover:bg-gray-600"
         >
           Preview
         </button>
       </div>
-      <div id="editor-container" class="w-full h-[calc(100vh-50px)] bg-[#272822]">
+      <div id="editor-container" class="w-full h-[calc(100vh-50px)] bg-gray-900">
         <textarea
           id="editor"
-          class="w-full h-full bg-neutral-900 text-neutral-100 p-4 box-border text-sm rounded font-mono resize-none border-none"
+          class="w-full h-full bg-gray-900 text-gray-300 p-4 box-border text-sm rounded font-mono resize-none border-none"
         ></textarea>
       </div>
       <div
         id="preview-container"
-        class="p-4 h-[calc(100vh-50px)] overflow-y-auto text-sm"
+        class="px-6 h-[calc(100vh-50px)] overflow-y-auto text-sm"
         style="display: none"
       >
         <div id="preview" class="prose prose-invert max-w-none"></div>
