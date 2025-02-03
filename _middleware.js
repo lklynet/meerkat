@@ -8,8 +8,16 @@ export async function onRequest({ request, env, next }) {
 
   let text = await response.text();
 
-  // Replace the environment variable placeholder
-  text = text.replace("__API_KEY__", env.API_KEY || "");
+  // Create the environment variables object
+  const envVars = {
+    API_KEY: env.API_KEY || "",
+  };
+
+  // Replace the environment variables placeholder with actual values
+  text = text.replace(
+    /window\.ENV\s*=\s*{[^}]*}/,
+    `window.ENV = ${JSON.stringify(envVars)}`
+  );
 
   return new Response(text, {
     headers: response.headers,
