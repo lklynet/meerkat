@@ -169,6 +169,13 @@ console.log('Hello, world!');
         <div id="preview" class="prose prose-invert max-w-none"></div>
       </div>
     </div>
+
+    <!-- Inject environment variables -->
+    <script>
+      const API_KEY = "%API_KEY%"; // This will be replaced by Cloudflare Pages
+    </script>
+
+    <!-- Main Script -->
     <script src="scripts.js"></script>
   </body>
 </html>
