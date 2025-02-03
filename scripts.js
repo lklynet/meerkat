@@ -19,7 +19,9 @@ document.addEventListener("DOMContentLoaded", () => {
       redirect: "follow",
     }).then((response) => {
       if (response.redirected) {
-        window.location.href = response.url;
+        // Extract just the note ID from the redirect URL
+        const noteId = response.url.split("/").pop();
+        window.location.href = "/" + noteId;
       }
     });
   }
