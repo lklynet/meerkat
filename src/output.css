@@ -737,11 +737,17 @@
   .overflow-hidden {
     overflow: hidden;
   }
+  .overflow-x-auto {
+    overflow-x: auto;
+  }
   .overflow-x-hidden {
     overflow-x: hidden;
   }
   .overflow-y-auto {
     overflow-y: auto;
+  }
+  .overflow-y-hidden {
+    overflow-y: hidden;
   }
   .rounded {
     border-radius: 0.25rem;
@@ -787,9 +793,6 @@
   .border-neutral-600 {
     border-color: var(--color-neutral-600);
   }
-  .bg-\[\#292c3c\] {
-    background-color: #292c3c;
-  }
   .bg-\[\#181825\] {
     background-color: #181825;
   }
@@ -799,17 +802,20 @@
   .bg-\[\#1e1f1c\] {
     background-color: #1e1f1c;
   }
+  .bg-\[\#31353f\] {
+    background-color: #31353f;
+  }
   .bg-\[\#3e3d32\] {
     background-color: #3e3d32;
   }
   .bg-\[\#282c34\] {
     background-color: #282c34;
   }
+  .bg-\[\#292c3c\] {
+    background-color: #292c3c;
+  }
   .bg-\[\#21252b\] {
     background-color: #21252b;
-  }
-  .bg-\[\#31353f\] {
-    background-color: #31353f;
   }
   .bg-\[\#272822\] {
     background-color: #272822;
@@ -909,6 +915,9 @@
   }
   .break-words {
     overflow-wrap: break-word;
+  }
+  .whitespace-pre {
+    white-space: pre;
   }
   .whitespace-pre-wrap {
     white-space: pre-wrap;
