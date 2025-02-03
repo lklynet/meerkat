@@ -44,11 +44,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   const sidebar = document.getElementById("sidebar");
   const toggleButton = document.getElementById("toggle-sidebar");
   const toggleIcon = toggleButton.querySelector("i");
-  let isSidebarOpen = true;
+  let isSidebarOpen = localStorage.getItem("sidebarOpen") !== "false";
+
+  // Apply initial sidebar state
+  if (!isSidebarOpen) {
+    sidebar.style.transform = "translateX(-100%)";
+    toggleButton.style.left = "0px";
+    toggleIcon.className = "fas fa-chevron-right";
+    const mainContent = document.querySelector(".main-content");
+    mainContent.style.marginLeft = "-270px";
+    mainContent.style.width = "calc(100% + 270px)";
+    const previewContainer = document.getElementById("preview-container");
+    if (previewContainer) {
+      previewContainer.style.marginLeft = mainContent.style.marginLeft;
+      previewContainer.style.width = mainContent.style.width;
+    }
+  }
 
   // Toggle sidebar function
   toggleButton.addEventListener("click", () => {
     isSidebarOpen = !isSidebarOpen;
+    localStorage.setItem("sidebarOpen", isSidebarOpen);
     sidebar.style.transform = isSidebarOpen ? "translateX(0)" : "translateX(-100%)";
     toggleButton.style.left = isSidebarOpen ? "270px" : "0px";
     toggleIcon.className = isSidebarOpen ? "fas fa-chevron-left" : "fas fa-chevron-right";
@@ -58,6 +74,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     mainContent.style.marginLeft = isSidebarOpen ? "0px" : "-270px";
     mainContent.style.width = isSidebarOpen ? "100%" : "calc(100% + 270px)";
     editor.refresh(); // Refresh CodeMirror to adjust to new width
+    
+    // Update preview container width and margin to match editor container
+    const previewContainer = document.getElementById("preview-container");
+    if (previewContainer) {
+      previewContainer.style.marginLeft = mainContent.style.marginLeft;
+      previewContainer.style.width = mainContent.style.width;
+      previewContainer.style.transition = "width 0.3s ease-in-out, margin-left 0.3s ease-in-out";
+    }
   });
   // Initialize CodeMirror
   const textArea = document.getElementById("editor");
@@ -75,7 +99,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
   renderPreview();
   const urlParams = new URLSearchParams(window.location.search);
-  const mode = urlParams.get("mode") || "edit";
+  const mode = localStorage.getItem("editorMode") || urlParams.get("mode") || "edit";
   const noteId = window.location.pathname.substring(1);
   setMode(mode);
 
