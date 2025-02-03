@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+#preview h1 {
+  @apply text-4xl font-bold mt-0 mb-2;
+}
+#preview h2 {
+  @apply text-3xl font-bold mt-0 mb-2;
+}
+#preview h3 {
+  @apply text-2xl font-bold mt-0 mb-2;
+}
+#preview h4 {
+  @apply text-xl font-bold mt-0 mb-2;
+}
+#preview h5 {
+  @apply text-lg font-bold mt-0 mb-2;
+}
+#preview h6 {
+  @apply text-base font-bold mt-0 mb-2;
+}
+#preview p {
+  @apply my-4;
+}
+#preview strong {
+  @apply font-semibold;
+}
+#preview em {
+  @apply italic;
+}
+#preview a {
+  @apply text-blue-400 underline;
+}
+#preview a:hover {
+  @apply text-blue-300 no-underline;
+}
+#preview blockquote {
+  @apply border-l-4 border-neutral-600 pl-4 italic my-4;
+}
+#preview code {
+  @apply bg-neutral-800 text-neutral-100 px-1 py-0.5 rounded text-sm;
+}
+#preview pre {
+  @apply bg-neutral-800 text-neutral-100 p-4 rounded text-sm overflow-x-auto my-4;
+}
+#preview hr {
+  @apply border-b border-neutral-700 my-8;
+}
+#preview ul {
+  @apply list-disc list-inside my-4;
+}
+#preview ol {
+  @apply list-decimal list-inside my-4;
+}
+#preview ul ul,
+#preview ol ul,
+#preview ul ol,
+#preview ol ol {
+  @apply ml-6;
+}
+#preview table {
+  @apply w-full border-collapse my-4;
+}
+#preview thead th {
+  @apply border-b border-neutral-600 font-semibold px-4 py-2;
+}
+#preview tr {
+  @apply border-b border-neutral-700;
+}
+#preview th,
+#preview td {
+  @apply px-4 py-2 align-top;
+}
+#preview tr:nth-child(even) {
+  @apply bg-neutral-800;
+}
+#preview img {
+  @apply max-w-full my-4;
+}
+#preview sup a {
+  @apply text-xs;
+}
