@@ -40,6 +40,25 @@ async function fetchAPI(endpoint, options = {}) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Initialize sidebar state
+  const sidebar = document.getElementById("sidebar");
+  const toggleButton = document.getElementById("toggle-sidebar");
+  const toggleIcon = toggleButton.querySelector("i");
+  let isSidebarOpen = true;
+
+  // Toggle sidebar function
+  toggleButton.addEventListener("click", () => {
+    isSidebarOpen = !isSidebarOpen;
+    sidebar.style.transform = isSidebarOpen ? "translateX(0)" : "translateX(-100%)";
+    toggleButton.style.left = isSidebarOpen ? "270px" : "0px";
+    toggleIcon.className = isSidebarOpen ? "fas fa-chevron-left" : "fas fa-chevron-right";
+    
+    // Update main content area width
+    const mainContent = document.querySelector(".main-content");
+    mainContent.style.marginLeft = isSidebarOpen ? "0px" : "-270px";
+    mainContent.style.width = isSidebarOpen ? "100%" : "calc(100% + 270px)";
+    editor.refresh(); // Refresh CodeMirror to adjust to new width
+  });
   // Initialize CodeMirror
   const textArea = document.getElementById("editor");
   editor = CodeMirror.fromTextArea(textArea, {

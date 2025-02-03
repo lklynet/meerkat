@@ -51,11 +51,19 @@
   <body
     class="flex flex-col md:flex-row h-screen overflow-hidden font-mono rounded bg-gray-900 text-gray-300 text-sm"
   >
+  <button
+  id="toggle-sidebar"
+  class="text-gray-400 hover:text-gray-200 transition-all duration-300 absolute top-2 p-2 rounded-r z-10"
+  style="left: 270px"
+>
+  <i class="fas fa-chevron-left"></i>
+</button>
     <div
       id="sidebar"
-      class="md:w-72 w-full md:max-w-sm bg-gray-900 flex flex-col overflow-hidden resize-x p-2 box-border"
+      class="md:w-74 w-full md:max-w-sm bg-gray-900 flex flex-col overflow-hidden p-2 box-border transition-transform duration-300 ease-in-out relative"
     >
       <div class="flex items-center p-2 bg-gray-900 box-border">
+        
         <div
           class="flex-grow text-center text-md font-bold cursor-pointer"
           onclick="window.location.href='https://lkly.net';"
@@ -190,7 +198,7 @@ console.log('Hello, world!');
           Preview
         </button>
       </div>
-      <div id="editor-container" class="w-full h-[calc(100vh-50px)] bg-gray-900">
+      <div id="editor-container" class="w-full h-[calc(100vh-50px)] bg-gray-900 main-content">
         <textarea
           id="editor"
           class="w-full h-full bg-gray-900 text-gray-300 p-4 box-border text-sm rounded font-mono resize-none border-none"
