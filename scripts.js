@@ -1,11 +1,19 @@
 const API_URL = "https://notes-api.leefamous.workers.dev";
 const API_KEY = window.ENV?.API_KEY || "";
 
+// Helper function to check if API key is properly configured
+function isValidAPIKey(key) {
+  return key && key !== "__API_KEY__" && key.length > 0;
+}
+
 // Helper function for API calls
 async function fetchAPI(endpoint, options = {}) {
-  if (!API_KEY || API_KEY === "__API_KEY__") {
-    console.error("API key is not properly configured");
-    throw new Error("API key is not properly configured");
+  if (!isValidAPIKey(API_KEY)) {
+    const error = new Error(
+      "API key is not properly configured. Please check your Cloudflare Pages environment variables."
+    );
+    error.code = "API_KEY_MISSING";
+    throw error;
   }
 
   const headers = {
@@ -21,15 +29,24 @@ async function fetchAPI(endpoint, options = {}) {
     });
 
     if (response.status === 401) {
-      throw new Error("Invalid API key");
+      const error = new Error(
+        "Invalid API key. Please check your Cloudflare Pages environment variables."
+      );
+      error.code = "API_KEY_INVALID";
+      throw error;
     }
 
     if (!response.ok) {
-      throw new Error(`API call failed: ${response.statusText}`);
+      const error = new Error(`API call failed: ${response.statusText}`);
+      error.code = "API_CALL_FAILED";
+      throw error;
     }
 
     return response;
   } catch (error) {
+    if (!error.code) {
+      error.code = "NETWORK_ERROR";
+    }
     console.error("API call failed:", error);
     throw error;
   }
@@ -38,6 +55,17 @@ async function fetchAPI(endpoint, options = {}) {
 document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
   renderPreview();
+
+  // Check API key configuration immediately
+  if (!isValidAPIKey(API_KEY)) {
+    const editor = document.getElementById("editor");
+    editor.value =
+      "Error: API key is not properly configured. Please check your Cloudflare Pages environment variables.";
+    editor.disabled = true;
+    document.getElementById("save-status").style.backgroundColor = "#FF4500";
+    return;
+  }
+
   const urlParams = new URLSearchParams(window.location.search);
   const mode = urlParams.get("mode") || "edit";
   const noteId = window.location.pathname.substring(1);
@@ -59,6 +87,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   } catch (error) {
     console.error("Failed to initialize note:", error);
+    const editor = document.getElementById("editor");
+    editor.value = `Error: ${error.message}`;
+    editor.disabled = true;
+    document.getElementById("save-status").style.backgroundColor = "#FF4500";
   }
 });
 
