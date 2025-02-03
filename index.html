@@ -31,9 +31,19 @@
       .CodeMirror {
         background-color: rgb(31 41 55) !important;
         height: 100% !important;
+        width: 100% !important;
         color: #abb2bf !important;
         word-wrap: break-word !important;
         white-space: pre-wrap !important;
+        overflow: auto !important;
+        position: absolute !important;
+      }
+      .CodeMirror-scroll {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+      }
+      .CodeMirror-sizer {
+        max-width: 100% !important;
       }
       .CodeMirror-gutters {
         background-color: rgb(31 41 55) !important;
@@ -200,7 +210,7 @@ console.log('Hello, world!');
           Preview
         </button>
       </div>
-      <div id="editor-container" class="w-full h-[calc(100vh-50px)] bg-gray-900 main-content overflow-hidden flex-shrink-0">
+      <div id="editor-container" class="w-full h-[calc(100vh-50px)] bg-gray-900 main-content overflow-hidden flex-shrink-0 fixed-container" style="position: relative; max-width: 100%;">
         <textarea
           id="editor"
           class="w-full h-full bg-gray-900 text-gray-300 p-4 box-border text-sm rounded font-mono resize-none border-none overflow-x-hidden whitespace-pre-wrap"
@@ -208,8 +218,8 @@ console.log('Hello, world!');
       </div>
       <div
         id="preview-container"
-        class="px-6 h-[calc(100vh-50px)] overflow-y-auto text-sm max-w-full flex-shrink-0"
-        style="display: none"
+        class="px-6 h-[calc(100vh-50px)] overflow-y-auto text-sm max-w-full flex-shrink-0 fixed-container"
+        style="display: none; position: relative; max-width: 100%;"
       >
         <div id="preview" class="prose prose-invert max-w-none"></div>
       </div>
