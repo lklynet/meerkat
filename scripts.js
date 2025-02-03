@@ -11,6 +11,9 @@ console.log("API_KEY initialized:", !!API_KEY);
 console.log("API_KEY length:", API_KEY.length);
 console.log("API_KEY is placeholder:", API_KEY === "__API_KEY__");
 
+// Initialize CodeMirror
+let editor;
+
 // Helper function for API calls
 async function fetchAPI(endpoint, options = {}) {
   const headers = {
@@ -37,6 +40,19 @@ async function fetchAPI(endpoint, options = {}) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Initialize CodeMirror
+  const textArea = document.getElementById("editor");
+  editor = CodeMirror.fromTextArea(textArea, {
+    mode: "markdown",
+    theme: "monokai",
+    lineNumbers: true,
+    lineWrapping: true,
+    autofocus: true,
+    tabSize: 2,
+    indentWithTabs: false,
+    viewportMargin: Infinity
+  });
+
   setupEventListeners();
   renderPreview();
   const urlParams = new URLSearchParams(window.location.search);
@@ -50,7 +66,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const response = await fetchAPI(`/${noteId}`);
       const data = await response.json();
       if (data.content) {
-        document.getElementById("editor").value = data.content;
+        editor.setValue(data.content);
       } else {
         throw new Error("No content received");
       }
@@ -66,9 +82,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   } catch (error) {
     console.error("Failed to initialize note:", error);
-    const editor = document.getElementById("editor");
-    editor.value = `Error: ${error.message}`;
-    editor.disabled = true;
+    editor.setValue(`Error: ${error.message}`);
+    editor.setOption("readOnly", true);
     document.getElementById("save-status").style.backgroundColor = "#FF4500";
   }
 });
@@ -78,24 +93,20 @@ let debounceTimer;
 const currentNoteId = window.location.pathname.substring(1);
 
 function setupEventListeners() {
-  const editor = document.getElementById("editor");
   const previewButton = document.getElementById("preview-button");
   const editButton = document.getElementById("edit-button");
   const saveStatus = document.getElementById("save-status");
 
-  editor.addEventListener(
-    "input",
-    debounce(() => {
-      saveStatus.style.backgroundColor = "#FFD700"; // Yellow while saving
-      saveNoteContent()
-        .then(() => {
-          saveStatus.style.backgroundColor = "#32CD32"; // Green on success
-        })
-        .catch(() => {
-          saveStatus.style.backgroundColor = "#FF4500"; // Red on error
-        });
-    }, 500)
-  );
+  editor.on("change", debounce(() => {
+    saveStatus.style.backgroundColor = "#FFD700"; // Yellow while saving
+    saveNoteContent()
+      .then(() => {
+        saveStatus.style.backgroundColor = "#32CD32"; // Green on success
+      })
+      .catch(() => {
+        saveStatus.style.backgroundColor = "#FF4500"; // Red on error
+      });
+  }, 500));
 
   // Preview button
   previewButton.addEventListener("click", () => {
@@ -164,10 +175,10 @@ function renderPreview() {
     previewContainer.style.display = "none";
     editButton.style.display = "none";
     previewButton.style.display = "inline-block";
+    editor.refresh(); // Refresh CodeMirror when switching to edit mode
   } else {
-    const editor = document.getElementById("editor");
     const preview = document.getElementById("preview");
-    const rawHTML = marked.parse(editor.value);
+    const rawHTML = marked.parse(editor.getValue());
     const cleanHTML = DOMPurify.sanitize(rawHTML);
     preview.innerHTML = cleanHTML;
 
@@ -180,7 +191,7 @@ function renderPreview() {
 
 async function saveNoteContent() {
   if (!currentNoteId) return;
-  const content = document.getElementById("editor").value;
+  const content = editor.getValue();
   try {
     await fetchAPI(`/${currentNoteId}`, {
       method: "POST",
@@ -246,7 +257,7 @@ async function cloneNote() {
     alert("No note to clone.");
     return;
   }
-  const content = document.getElementById("editor").value;
+  const content = editor.getValue();
   const newNoteId = [...Array(8)]
     .map(() => Math.random().toString(36)[2])
     .join("");
@@ -270,7 +281,7 @@ function exportNote() {
     alert("No note to export. Please create or open a note first.");
     return;
   }
-  const content = document.getElementById("editor").value;
+  const content = editor.getValue();
   const blob = new Blob([content], { type: "text/markdown" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
