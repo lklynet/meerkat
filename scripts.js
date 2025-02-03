@@ -97,11 +97,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   setupEventListeners();
-  renderPreview();
   const urlParams = new URLSearchParams(window.location.search);
-  const mode = localStorage.getItem("editorMode") || urlParams.get("mode") || "edit";
+  // Prioritize server-saved state over localStorage and URL parameters
+  const mode = "edit";
   const noteId = window.location.pathname.substring(1);
-  setMode(mode);
 
   try {
     if (noteId) {
@@ -110,6 +109,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       const data = await response.json();
       if (data.content) {
         editor.setValue(data.content);
+        // Apply server-saved mode state, fallback to localStorage if not available
+        const mode = data.save_state || localStorage.getItem("editorMode") || "edit";
+        setMode(mode);
+        renderPreview(); // Explicitly render preview after content is set
       } else {
         throw new Error("No content received");
       }
