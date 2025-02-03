@@ -8,7 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (noteId) {
     // Load existing note
-    fetch(`https://notes-api.leefamous.workers.dev/${noteId}`)
+    fetch(`https://notes-api.leefamous.workers.dev/${noteId}`, {
+      headers: {
+        "X-API-Key": API_KEY,
+      },
+    })
       .then((response) => response.json())
       .then((data) => {
         document.getElementById("editor").value = data.content;
@@ -17,9 +21,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // Create new note
     fetch("https://notes-api.leefamous.workers.dev/", {
       redirect: "follow",
+      headers: {
+        "X-API-Key": API_KEY,
+      },
     }).then((response) => {
       if (response.redirected) {
-        // Extract just the note ID from the redirect URL
         const noteId = response.url.split("/").pop();
         window.location.href = "/" + noteId;
       }
@@ -104,6 +110,9 @@ async function saveModeToDatabase(mode) {
   if (!currentNoteId) return;
   await fetch(`https://notes-api.leefamous.workers.dev/${currentNoteId}`, {
     method: "POST",
+    headers: {
+      "X-API-Key": API_KEY,
+    },
     body: new URLSearchParams({ save_state: mode }),
   }).catch((error) => {
     console.error("Failed to save note mode:", error);
@@ -138,10 +147,13 @@ function renderPreview() {
 }
 
 async function saveNoteContent() {
-  if (!currentNoteId) return; // Avoid saving if no noteId
+  if (!currentNoteId) return;
   const content = document.getElementById("editor").value;
   await fetch(`https://notes-api.leefamous.workers.dev/${currentNoteId}`, {
     method: "POST",
+    headers: {
+      "X-API-Key": API_KEY,
+    },
     body: new URLSearchParams({ content }),
   }).catch((error) => {
     console.error("Failed to save note content:", error);
@@ -181,6 +193,9 @@ async function deleteNote() {
     try {
       await fetch(`https://notes-api.leefamous.workers.dev/${currentNoteId}`, {
         method: "DELETE",
+        headers: {
+          "X-API-Key": API_KEY,
+        },
       });
       window.location.href = "/";
     } catch (error) {
@@ -199,17 +214,17 @@ async function cloneNote() {
     return;
   }
   const content = document.getElementById("editor").value;
-  // Create a new note ID
   const newNoteId = [...Array(8)]
     .map(() => Math.random().toString(36)[2])
     .join("");
   try {
-    // Save the current content to the new note
     await fetch(`https://notes-api.leefamous.workers.dev/${newNoteId}`, {
       method: "POST",
+      headers: {
+        "X-API-Key": API_KEY,
+      },
       body: new URLSearchParams({ content }),
     });
-    // Redirect to the new note
     window.location.href = "/" + newNoteId;
   } catch (error) {
     console.error("Failed to clone note:", error);

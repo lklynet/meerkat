@@ -3,13 +3,28 @@
  */
 export default {
   async fetch(request, env, ctx) {
+    // Verify API key for all non-OPTIONS requests
+    if (request.method !== "OPTIONS") {
+      const apiKey = request.headers.get("X-API-Key");
+      if (!apiKey || apiKey !== env.API_KEY) {
+        return new Response("Unauthorized", {
+          status: 401,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, X-API-Key",
+          },
+        });
+      }
+    }
+
     // Handle CORS preflight requests
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Headers": "Content-Type, X-API-Key",
         },
       });
     }
@@ -24,7 +39,7 @@ export default {
         headers: {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Headers": "Content-Type, X-API-Key",
           Location: location,
         },
       });
