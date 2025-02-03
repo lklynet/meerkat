@@ -15,11 +15,13 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   } else {
     // Create new note
-    fetch("https://notes-api.leefamous.workers.dev/")
-      .then((response) => response.text())
-      .then((url) => {
-        window.location.href = url;
-      });
+    fetch("https://notes-api.leefamous.workers.dev/", {
+      redirect: "follow",
+    }).then((response) => {
+      if (response.redirected) {
+        window.location.href = response.url;
+      }
+    });
   }
 });
 

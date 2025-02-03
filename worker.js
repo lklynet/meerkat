@@ -3,7 +3,34 @@
  */
 export default {
   async fetch(request, env, ctx) {
-    return handleRequest(request, env);
+    // Handle CORS preflight requests
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
+      });
+    }
+
+    const response = await handleRequest(request, env);
+
+    // For redirects, we need to create a new response with CORS headers
+    if (response.status === 302) {
+      const location = response.headers.get("Location");
+      return new Response(null, {
+        status: 302,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+          Location: location,
+        },
+      });
+    }
+
+    return response;
   },
 };
 
@@ -26,7 +53,16 @@ async function handleRequest(request, env) {
       .bind(noteId, defaultContent, timestamp, "edit")
       .run();
 
-    return Response.redirect(`${url.origin}/${noteId}`, 302);
+    // Return a clean redirect to just the note ID
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: `/${noteId}`,
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
   }
 
   // For all other paths, treat as note ID
