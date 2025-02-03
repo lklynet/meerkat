@@ -1,10 +1,23 @@
 const API_URL = "https://notes-api.leefamous.workers.dev";
+
+// Debug window.ENV
+console.log("window.ENV:", window.ENV);
+console.log("API_KEY from ENV:", window.ENV?.API_KEY);
+
 const API_KEY = window.ENV?.API_KEY || "";
 
 // Helper function for API calls
 async function fetchAPI(endpoint, options = {}) {
-  if (!API_KEY || API_KEY === "__API_KEY__") {
-    console.error("API key is not properly configured");
+  // Debug API key value
+  console.log("Using API_KEY:", API_KEY);
+  console.log("API_KEY length:", API_KEY.length);
+  console.log("API_KEY type:", typeof API_KEY);
+
+  if (!API_KEY || API_KEY === "__API_KEY__" || API_KEY.trim() === "") {
+    console.error("API key validation failed:");
+    console.error("- API_KEY empty:", !API_KEY);
+    console.error("- API_KEY is placeholder:", API_KEY === "__API_KEY__");
+    console.error("- API_KEY is whitespace:", API_KEY.trim() === "");
     throw new Error("API key is not properly configured");
   }
 
@@ -14,11 +27,19 @@ async function fetchAPI(endpoint, options = {}) {
     ...options.headers,
   };
 
+  // Debug request details
+  console.log("Making request to:", `${API_URL}${endpoint}`);
+  console.log("Request headers:", headers);
+
   try {
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
     });
+
+    // Debug response
+    console.log("Response status:", response.status);
+    console.log("Response headers:", Object.fromEntries(response.headers));
 
     if (response.status === 401) {
       throw new Error("Invalid API key");
