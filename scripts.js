@@ -5,11 +5,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const mode = urlParams.get("mode") || "edit";
   const noteId = window.location.pathname.substring(1);
   setMode(mode);
+
   if (noteId) {
+    // Load existing note
     fetch(`https://notes-api.leefamous.workers.dev/${noteId}`)
       .then((response) => response.json())
       .then((data) => {
         document.getElementById("editor").value = data.content;
+      });
+  } else {
+    // Create new note
+    fetch("https://notes-api.leefamous.workers.dev/")
+      .then((response) => response.text())
+      .then((url) => {
+        window.location.href = url;
       });
   }
 });
