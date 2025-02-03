@@ -32,6 +32,8 @@
         background-color: rgb(31 41 55) !important;
         height: 100% !important;
         color: #abb2bf !important;
+        word-wrap: break-word !important;
+        white-space: pre-wrap !important;
       }
       .CodeMirror-gutters {
         background-color: rgb(31 41 55) !important;
@@ -198,10 +200,10 @@ console.log('Hello, world!');
           Preview
         </button>
       </div>
-      <div id="editor-container" class="w-full h-[calc(100vh-50px)] bg-gray-900 main-content">
+      <div id="editor-container" class="w-full h-[calc(100vh-50px)] bg-gray-900 main-content overflow-hidden">
         <textarea
           id="editor"
-          class="w-full h-full bg-gray-900 text-gray-300 p-4 box-border text-sm rounded font-mono resize-none border-none"
+          class="w-full h-full bg-gray-900 text-gray-300 p-4 box-border text-sm rounded font-mono resize-none border-none overflow-x-hidden whitespace-pre-wrap"
         ></textarea>
       </div>
       <div
