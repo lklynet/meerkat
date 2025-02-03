@@ -1,6 +1,41 @@
+const API_URL = "https://notes-api.leefamous.workers.dev";
 const API_KEY = window.ENV?.API_KEY || "";
 
-document.addEventListener("DOMContentLoaded", () => {
+// Helper function for API calls
+async function fetchAPI(endpoint, options = {}) {
+  if (!API_KEY || API_KEY === "__API_KEY__") {
+    console.error("API key is not properly configured");
+    throw new Error("API key is not properly configured");
+  }
+
+  const headers = {
+    "X-API-Key": API_KEY,
+    "Content-Type": "application/json",
+    ...options.headers,
+  };
+
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    if (response.status === 401) {
+      throw new Error("Invalid API key");
+    }
+
+    if (!response.ok) {
+      throw new Error(`API call failed: ${response.statusText}`);
+    }
+
+    return response;
+  } catch (error) {
+    console.error("API call failed:", error);
+    throw error;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
   renderPreview();
   const urlParams = new URLSearchParams(window.location.search);
@@ -8,30 +43,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const noteId = window.location.pathname.substring(1);
   setMode(mode);
 
-  if (noteId) {
-    // Load existing note
-    fetch(`https://notes-api.leefamous.workers.dev/${noteId}`, {
-      headers: {
-        "X-API-Key": API_KEY,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        document.getElementById("editor").value = data.content;
-      });
-  } else {
-    // Create new note
-    fetch("https://notes-api.leefamous.workers.dev/", {
-      redirect: "follow",
-      headers: {
-        "X-API-Key": API_KEY,
-      },
-    }).then((response) => {
+  try {
+    if (noteId) {
+      // Load existing note
+      const response = await fetchAPI(`/${noteId}`);
+      const data = await response.json();
+      document.getElementById("editor").value = data.content;
+    } else {
+      // Create new note
+      const response = await fetchAPI("/", { redirect: "follow" });
       if (response.redirected) {
         const noteId = response.url.split("/").pop();
         window.location.href = "/" + noteId;
       }
-    });
+    }
+  } catch (error) {
+    console.error("Failed to initialize note:", error);
   }
 });
 
@@ -110,15 +137,14 @@ function setMode(mode) {
 
 async function saveModeToDatabase(mode) {
   if (!currentNoteId) return;
-  await fetch(`https://notes-api.leefamous.workers.dev/${currentNoteId}`, {
-    method: "POST",
-    headers: {
-      "X-API-Key": API_KEY,
-    },
-    body: new URLSearchParams({ save_state: mode }),
-  }).catch((error) => {
+  try {
+    await fetchAPI(`/${currentNoteId}`, {
+      method: "POST",
+      body: new URLSearchParams({ save_state: mode }),
+    });
+  } catch (error) {
     console.error("Failed to save note mode:", error);
-  });
+  }
 }
 
 function renderPreview() {
@@ -151,15 +177,14 @@ function renderPreview() {
 async function saveNoteContent() {
   if (!currentNoteId) return;
   const content = document.getElementById("editor").value;
-  await fetch(`https://notes-api.leefamous.workers.dev/${currentNoteId}`, {
-    method: "POST",
-    headers: {
-      "X-API-Key": API_KEY,
-    },
-    body: new URLSearchParams({ content }),
-  }).catch((error) => {
+  try {
+    await fetchAPI(`/${currentNoteId}`, {
+      method: "POST",
+      body: new URLSearchParams({ content }),
+    });
+  } catch (error) {
     console.error("Failed to save note content:", error);
-  });
+  }
 }
 
 function debounce(func, delay) {
@@ -193,15 +218,13 @@ async function deleteNote() {
   }
   if (confirm("Are you sure you want to delete this note?")) {
     try {
-      await fetch(`https://notes-api.leefamous.workers.dev/${currentNoteId}`, {
+      await fetchAPI(`/${currentNoteId}`, {
         method: "DELETE",
-        headers: {
-          "X-API-Key": API_KEY,
-        },
       });
       window.location.href = "/";
     } catch (error) {
       console.error("Failed to delete note:", error);
+      alert("Failed to delete note. Please try again.");
     }
   }
 }
@@ -220,16 +243,14 @@ async function cloneNote() {
     .map(() => Math.random().toString(36)[2])
     .join("");
   try {
-    await fetch(`https://notes-api.leefamous.workers.dev/${newNoteId}`, {
+    await fetchAPI(`/${newNoteId}`, {
       method: "POST",
-      headers: {
-        "X-API-Key": API_KEY,
-      },
       body: new URLSearchParams({ content }),
     });
     window.location.href = "/" + newNoteId;
   } catch (error) {
     console.error("Failed to clone note:", error);
+    alert("Failed to clone note. Please try again.");
   }
 }
 
