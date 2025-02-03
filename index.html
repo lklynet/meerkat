@@ -6,7 +6,7 @@
 
     <!-- Inject environment variables -->
     <script>
-      window.API_KEY = "%API_KEY%"; // This will be replaced by Cloudflare Pages
+      const API_KEY = "{env.API_KEY}";
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
