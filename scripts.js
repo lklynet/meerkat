@@ -1,3 +1,5 @@
+const API_KEY = window.ENV?.API_KEY || "";
+
 document.addEventListener("DOMContentLoaded", () => {
   setupEventListeners();
   renderPreview();

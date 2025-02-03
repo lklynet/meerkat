@@ -4,9 +4,11 @@
     <meta charset="UTF-8" />
     <title>Markdown Notepad</title>
 
-    <!-- Inject environment variables -->
+    <!-- Environment Variables -->
     <script>
-      const API_KEY = "{env.API_KEY}";
+      window.ENV = {
+        API_KEY: "__API_KEY__",
+      };
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
