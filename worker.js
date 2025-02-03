@@ -3,183 +3,160 @@
  */
 export default {
   async fetch(request, env, ctx) {
-    // Verify API key for all non-OPTIONS requests
-    if (request.method !== "OPTIONS") {
-      const apiKey = request.headers.get("X-API-Key");
-      if (!apiKey || apiKey !== env.API_KEY) {
-        return new Response("Unauthorized", {
-          status: 401,
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, X-API-Key",
-          },
-        });
-      }
-    }
+    // Update CORS headers
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "https://notes2.lkly.net",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, X-API-Key",
+      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Max-Age": "86400",
+    };
 
-    // Handle CORS preflight requests
+    // Handle CORS preflight
     if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, X-API-Key",
-        },
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    // Verify API key
+    const apiKey = request.headers.get("X-API-Key");
+    if (!apiKey) {
+      return new Response("Missing API key", {
+        status: 401,
+        headers: corsHeaders,
       });
     }
 
-    const response = await handleRequest(request, env);
-
-    // For redirects, we need to create a new response with CORS headers
-    if (response.status === 302) {
-      const location = response.headers.get("Location");
-      return new Response(null, {
-        status: 302,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, X-API-Key",
-          Location: location,
-        },
+    if (apiKey !== env.API_KEY) {
+      return new Response("Invalid API key", {
+        status: 401,
+        headers: corsHeaders,
       });
     }
 
-    return response;
-  },
-};
+    const url = new URL(request.url);
+    const path = url.pathname;
 
-/**
- * Primary Request Handler
- */
-async function handleRequest(request, env) {
-  const url = new URL(request.url);
-  const path = url.pathname;
+    // Add CORS headers to all responses
+    const baseHeaders = {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    };
 
-  // Root path: create a new note and redirect to its URL
-  if (path === "/" || path === "") {
-    const noteId = generateNoteId();
-    const defaultContent = getDefaultNoteContent();
-    const timestamp = Math.floor(Date.now() / 1000);
-
-    await env.NOTES_DB.prepare(
-      "INSERT INTO notes (id, content, created_at, save_state) VALUES (?, ?, ?, ?)"
-    )
-      .bind(noteId, defaultContent, timestamp, "edit")
-      .run();
-
-    // Return a clean redirect to just the note ID
-    return new Response(null, {
-      status: 302,
-      headers: {
-        Location: `/${noteId}`,
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
-  }
-
-  // For all other paths, treat as note ID
-  const noteId = path.substring(1);
-  if (request.method === "GET") {
-    // Retrieve an existing note
-    const { results } = await env.NOTES_DB.prepare(
-      "SELECT content, save_state FROM notes WHERE id = ?"
-    )
-      .bind(noteId)
-      .all();
-
-    if (results.length > 0) {
-      const noteContent = results[0].content;
-      const saveState = results[0].save_state || "edit";
-
-      return new Response(
-        JSON.stringify({ content: noteContent, save_state: saveState }),
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, DELETE",
-            "Access-Control-Allow-Headers": "Content-Type",
-          },
-        }
-      );
-    } else {
-      return new Response("Note not found", { status: 404 });
-    }
-  } else if (request.method === "POST") {
-    // Create/update a note
-    const formData = await request.formData();
-    const content = formData.get("content") || null;
-    const saveState = formData.get("save_state") || null;
-
-    const { results } = await env.NOTES_DB.prepare(
-      "SELECT id FROM notes WHERE id = ?"
-    )
-      .bind(noteId)
-      .all();
-
-    if (results.length > 0) {
-      // Update existing note
-      if (content !== null && saveState !== null) {
-        await env.NOTES_DB.prepare(
-          "UPDATE notes SET content = ?, save_state = ? WHERE id = ?"
-        )
-          .bind(content, saveState, noteId)
-          .run();
-      } else if (content !== null) {
-        await env.NOTES_DB.prepare("UPDATE notes SET content = ? WHERE id = ?")
-          .bind(content, noteId)
-          .run();
-      } else if (saveState !== null) {
-        await env.NOTES_DB.prepare(
-          "UPDATE notes SET save_state = ? WHERE id = ?"
-        )
-          .bind(saveState, noteId)
-          .run();
-      }
-    } else {
-      // Insert new note
+    // Root path: create a new note
+    if (path === "/" || path === "") {
+      const noteId = generateNoteId();
+      const defaultContent = getDefaultNoteContent();
       const timestamp = Math.floor(Date.now() / 1000);
+
       await env.NOTES_DB.prepare(
         "INSERT INTO notes (id, content, created_at, save_state) VALUES (?, ?, ?, ?)"
       )
-        .bind(
-          noteId,
-          content || getDefaultNoteContent(),
-          timestamp,
-          saveState || "edit"
-        )
+        .bind(noteId, defaultContent, timestamp, "edit")
         .run();
+
+      // Return the noteId instead of redirecting
+      return new Response(JSON.stringify({ noteId }), {
+        headers: baseHeaders,
+        status: 200,
+      });
     }
-    return new Response("Note updated", {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, DELETE",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
-  } else if (request.method === "DELETE") {
-    // Delete a note
-    await env.NOTES_DB.prepare("DELETE FROM notes WHERE id = ?")
-      .bind(noteId)
-      .run();
-    return Response.redirect(`${url.origin}/`, 302);
-  } else if (request.method === "OPTIONS") {
-    // Handle CORS preflight requests
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, DELETE",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
-  } else {
-    return new Response("Method not allowed", { status: 405 });
-  }
-}
+
+    // For all other paths, treat as note ID
+    const noteId = path.substring(1);
+
+    if (request.method === "GET") {
+      // Retrieve an existing note
+      const { results } = await env.NOTES_DB.prepare(
+        "SELECT content, save_state FROM notes WHERE id = ?"
+      )
+        .bind(noteId)
+        .all();
+
+      if (results.length > 0) {
+        return new Response(
+          JSON.stringify({
+            content: results[0].content,
+            save_state: results[0].save_state || "edit",
+          }),
+          {
+            headers: baseHeaders,
+            status: 200,
+          }
+        );
+      } else {
+        return new Response(JSON.stringify({ error: "Note not found" }), {
+          status: 404,
+          headers: baseHeaders,
+        });
+      }
+    } else if (request.method === "POST") {
+      const formData = await request.formData();
+      const content = formData.get("content");
+      const saveState = formData.get("save_state");
+
+      const { results } = await env.NOTES_DB.prepare(
+        "SELECT id FROM notes WHERE id = ?"
+      )
+        .bind(noteId)
+        .all();
+
+      if (results.length > 0) {
+        // Update existing note
+        if (content !== null && saveState !== null) {
+          await env.NOTES_DB.prepare(
+            "UPDATE notes SET content = ?, save_state = ? WHERE id = ?"
+          )
+            .bind(content, saveState, noteId)
+            .run();
+        } else if (content !== null) {
+          await env.NOTES_DB.prepare(
+            "UPDATE notes SET content = ? WHERE id = ?"
+          )
+            .bind(content, noteId)
+            .run();
+        } else if (saveState !== null) {
+          await env.NOTES_DB.prepare(
+            "UPDATE notes SET save_state = ? WHERE id = ?"
+          )
+            .bind(saveState, noteId)
+            .run();
+        }
+      } else {
+        // Insert new note
+        const timestamp = Math.floor(Date.now() / 1000);
+        await env.NOTES_DB.prepare(
+          "INSERT INTO notes (id, content, created_at, save_state) VALUES (?, ?, ?, ?)"
+        )
+          .bind(
+            noteId,
+            content || getDefaultNoteContent(),
+            timestamp,
+            saveState || "edit"
+          )
+          .run();
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: baseHeaders,
+        status: 200,
+      });
+    } else if (request.method === "DELETE") {
+      await env.NOTES_DB.prepare("DELETE FROM notes WHERE id = ?")
+        .bind(noteId)
+        .run();
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: baseHeaders,
+        status: 200,
+      });
+    } else {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405,
+        headers: baseHeaders,
+      });
+    }
+  },
+};
 
 /**
  * Generate a random 8-character ID
