@@ -1,19 +1,11 @@
 const API_URL = "https://notes-api.leefamous.workers.dev";
 const API_KEY = window.ENV?.API_KEY || "";
 
-// Helper function to check if API key is properly configured
-function isValidAPIKey(key) {
-  return key && key !== "__API_KEY__" && key.length > 0;
-}
-
 // Helper function for API calls
 async function fetchAPI(endpoint, options = {}) {
-  if (!isValidAPIKey(API_KEY)) {
-    const error = new Error(
-      "API key is not properly configured. Please check your Cloudflare Pages environment variables."
-    );
-    error.code = "API_KEY_MISSING";
-    throw error;
+  if (!API_KEY || API_KEY === "__API_KEY__") {
+    console.error("API key is not properly configured");
+    throw new Error("API key is not properly configured");
   }
 
   const headers = {
@@ -29,24 +21,15 @@ async function fetchAPI(endpoint, options = {}) {
     });
 
     if (response.status === 401) {
-      const error = new Error(
-        "Invalid API key. Please check your Cloudflare Pages environment variables."
-      );
-      error.code = "API_KEY_INVALID";
-      throw error;
+      throw new Error("Invalid API key");
     }
 
     if (!response.ok) {
-      const error = new Error(`API call failed: ${response.statusText}`);
-      error.code = "API_CALL_FAILED";
-      throw error;
+      throw new Error(`API call failed: ${response.statusText}`);
     }
 
     return response;
   } catch (error) {
-    if (!error.code) {
-      error.code = "NETWORK_ERROR";
-    }
     console.error("API call failed:", error);
     throw error;
   }
@@ -55,17 +38,6 @@ async function fetchAPI(endpoint, options = {}) {
 document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
   renderPreview();
-
-  // Check API key configuration immediately
-  if (!isValidAPIKey(API_KEY)) {
-    const editor = document.getElementById("editor");
-    editor.value =
-      "Error: API key is not properly configured. Please check your Cloudflare Pages environment variables.";
-    editor.disabled = true;
-    document.getElementById("save-status").style.backgroundColor = "#FF4500";
-    return;
-  }
-
   const urlParams = new URLSearchParams(window.location.search);
   const mode = urlParams.get("mode") || "edit";
   const noteId = window.location.pathname.substring(1);
@@ -76,14 +48,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Load existing note
       const response = await fetchAPI(`/${noteId}`);
       const data = await response.json();
-      document.getElementById("editor").value = data.content;
+      if (data.content) {
+        document.getElementById("editor").value = data.content;
+      } else {
+        throw new Error("No content received");
+      }
     } else {
       // Create new note
-      const response = await fetchAPI("/", { redirect: "follow" });
-      if (response.redirected) {
-        const noteId = response.url.split("/").pop();
-        window.location.href = "/" + noteId;
+      const response = await fetchAPI("/");
+      const data = await response.json();
+      if (data.noteId) {
+        window.location.href = `/${data.noteId}`;
+        return;
       }
+      throw new Error("No noteId received");
     }
   } catch (error) {
     console.error("Failed to initialize note:", error);
@@ -107,16 +85,13 @@ function setupEventListeners() {
   editor.addEventListener(
     "input",
     debounce(() => {
-      // Indicate unsaved changes (yellow)
-      saveStatus.style.backgroundColor = "#FFD700";
+      saveStatus.style.backgroundColor = "#FFD700"; // Yellow while saving
       saveNoteContent()
         .then(() => {
-          // Successfully saved (green)
-          saveStatus.style.backgroundColor = "#32CD32";
+          saveStatus.style.backgroundColor = "#32CD32"; // Green on success
         })
         .catch(() => {
-          // Error saving (red)
-          saveStatus.style.backgroundColor = "#FF4500";
+          saveStatus.style.backgroundColor = "#FF4500"; // Red on error
         });
     }, 500)
   );
@@ -142,18 +117,13 @@ function setupEventListeners() {
 
   // Keyboard shortcuts
   document.addEventListener("keydown", (event) => {
-    // CTRL+S => Save
     if (event.ctrlKey && event.key === "s") {
       event.preventDefault();
       saveNoteContent();
-    }
-    // CTRL+N => New Note
-    else if (event.ctrlKey && event.key === "n") {
+    } else if (event.ctrlKey && event.key === "n") {
       event.preventDefault();
       newNote();
-    }
-    // CTRL+P => Toggle Preview/Edit
-    else if (event.ctrlKey && event.key === "p") {
+    } else if (event.ctrlKey && event.key === "p") {
       event.preventDefault();
       setMode(isEditing ? "preview" : "edit");
       saveModeToDatabase(isEditing ? "preview" : "edit");
@@ -172,6 +142,9 @@ async function saveModeToDatabase(mode) {
   try {
     await fetchAPI(`/${currentNoteId}`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
       body: new URLSearchParams({ save_state: mode }),
     });
   } catch (error) {
@@ -186,13 +159,11 @@ function renderPreview() {
   const previewButton = document.getElementById("preview-button");
 
   if (isEditing) {
-    // Show editor
     editorContainer.style.display = "block";
     previewContainer.style.display = "none";
     editButton.style.display = "none";
     previewButton.style.display = "inline-block";
   } else {
-    // Show preview
     const editor = document.getElementById("editor");
     const preview = document.getElementById("preview");
     const rawHTML = marked.parse(editor.value);
@@ -212,17 +183,21 @@ async function saveNoteContent() {
   try {
     await fetchAPI(`/${currentNoteId}`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
       body: new URLSearchParams({ content }),
     });
   } catch (error) {
     console.error("Failed to save note content:", error);
+    throw error;
   }
 }
 
 function debounce(func, delay) {
   return function () {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(func, delay);
+    debounceTimer = setTimeout(() => func.apply(this, arguments), delay);
   };
 }
 
@@ -277,6 +252,9 @@ async function cloneNote() {
   try {
     await fetchAPI(`/${newNoteId}`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
       body: new URLSearchParams({ content }),
     });
     window.location.href = "/" + newNoteId;
