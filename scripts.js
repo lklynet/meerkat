@@ -13,6 +13,15 @@ console.log("API_KEY is placeholder:", API_KEY === "__API_KEY__");
 
 // Helper function for API calls
 async function fetchAPI(endpoint, options = {}) {
+  // Check for placeholder API key before making the request
+  if (API_KEY === "__API_KEY__") {
+    const error = new Error(
+      "API key not configured. Please set the API_KEY environment variable in your Cloudflare Pages settings."
+    );
+    error.code = "MISSING_API_KEY";
+    throw error;
+  }
+
   const headers = {
     "X-API-Key": API_KEY,
     "Content-Type": "application/json",
@@ -26,18 +35,25 @@ async function fetchAPI(endpoint, options = {}) {
     });
 
     if (response.status === 401) {
-      throw new Error(
-        "API key validation failed. Please check your configuration."
+      const error = new Error(
+        "Invalid API key. Please check your configuration."
       );
+      error.code = "INVALID_API_KEY";
+      throw error;
     }
 
     if (!response.ok) {
-      throw new Error(`API call failed: ${response.statusText}`);
+      const error = new Error(`API call failed: ${response.statusText}`);
+      error.code = "API_ERROR";
+      throw error;
     }
 
     return response;
   } catch (error) {
-    console.error("API call failed:", error);
+    if (!error.code) {
+      error.code = "NETWORK_ERROR";
+    }
+    console.error(`API call failed (${error.code}):`, error.message);
     throw error;
   }
 }
@@ -51,6 +67,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   setMode(mode);
 
   try {
+    if (API_KEY === "__API_KEY__") {
+      throw new Error(
+        "API key not configured. Please set the API_KEY environment variable in your Cloudflare Pages settings."
+      );
+    }
+
     if (noteId) {
       // Load existing note
       const response = await fetchAPI(`/${noteId}`);
@@ -73,9 +95,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.error("Failed to initialize note:", error);
     const editor = document.getElementById("editor");
-    editor.value = `Error: ${error.message}`;
+    editor.value = `Error: ${error.message}\n\nPlease contact the administrator.`;
     editor.disabled = true;
     document.getElementById("save-status").style.backgroundColor = "#FF4500";
+
+    // Disable all buttons when API key is not configured
+    if (error.code === "MISSING_API_KEY") {
+      const buttons = document.querySelectorAll("button");
+      buttons.forEach((button) => {
+        button.disabled = true;
+        button.style.opacity = "0.5";
+        button.style.cursor = "not-allowed";
+      });
+    }
   }
 });
 
