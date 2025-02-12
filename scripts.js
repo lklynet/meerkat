@@ -1,43 +1,5 @@
-// Debug initialization
-console.log("Script initialization started");
-console.log("window.ENV available:", !!window.ENV);
-console.log("window.ENV contents:", window.ENV);
-
-const API_URL = "https://notes-api.leefamous.workers.dev";
-const API_KEY = window.ENV?.API_KEY || "";
-
-// Log API key status
-console.log("API_KEY initialized:", !!API_KEY);
-console.log("API_KEY length:", API_KEY.length);
-console.log("API_KEY is placeholder:", API_KEY === "__API_KEY__");
-
 // Initialize CodeMirror
 let editor;
-
-// Helper function for API calls
-async function fetchAPI(endpoint, options = {}) {
-  const headers = {
-    "X-API-Key": API_KEY,
-    "Content-Type": "application/x-www-form-urlencoded",
-    ...options.headers,
-  };
-
-  try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
-
-    if (!response.ok) {
-      throw new Error(`API call failed: ${response.statusText}`);
-    }
-
-    return response;
-  } catch (error) {
-    console.error("API call failed:", error);
-    throw error;
-  }
-}
 
 document.addEventListener("DOMContentLoaded", async () => {
   // Initialize sidebar state

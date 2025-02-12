@@ -22,17 +22,6 @@ async function handleRequest(request, env) {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Only verify API key if it's set in the environment
-  if (env.API_KEY) {
-    const apiKey = request.headers.get("X-API-Key");
-    if (!apiKey || apiKey !== env.API_KEY) {
-      return new Response("Unauthorized", {
-        status: 401,
-        headers: corsHeaders,
-      });
-    }
-  }
-
   const url = new URL(request.url);
   const path = url.pathname;
 
