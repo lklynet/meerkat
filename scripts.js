@@ -1,10 +1,42 @@
+// Debug initialization
+console.log("Script initialization started");
+console.log("window.ENV available:", !!window.ENV);
+console.log("window.ENV contents:", window.ENV);
+
+const API_URL = "https://notes-api.leefamous.workers.dev";
+const API_KEY = window.ENV?.API_KEY || "";
+
+// Log API key status
+console.log("API_KEY initialized:", !!API_KEY);
+console.log("API_KEY length:", API_KEY.length);
+console.log("API_KEY is placeholder:", API_KEY === "__API_KEY__");
+
 // Initialize CodeMirror
 let editor;
 
-async function fetchWorker(path, options = {}) {
-  const baseUrl = "https://notes2.lkly.net";
-  const url = baseUrl + path;
-  return fetch(url, options);
+// Helper function for API calls
+async function fetchAPI(endpoint, options = {}) {
+  const headers = {
+    "X-API-Key": API_KEY,
+    "Content-Type": "application/x-www-form-urlencoded",
+    ...options.headers,
+  };
+
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`API call failed: ${response.statusText}`);
+    }
+
+    return response;
+  } catch (error) {
+    console.error("API call failed:", error);
+    throw error;
+  }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -73,7 +105,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     if (noteId) {
       // Load existing note
-      const response = await fetchWorker(`/${noteId}`);
+      const response = await fetchAPI(`/${noteId}`);
       const data = await response.json();
       if (data.content) {
         editor.setValue(data.content);
@@ -86,7 +118,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     } else {
       // Create new note
-      const response = await fetchWorker("/");
+      const response = await fetchAPI("/");
       const data = await response.json();
       if (data.noteId) {
         window.location.href = `/${data.noteId}`;
@@ -166,7 +198,7 @@ function setMode(mode) {
 async function saveModeToDatabase(mode) {
   if (!currentNoteId) return;
   try {
-    await fetchWorker(`/${currentNoteId}`, {
+    await fetchAPI(`/${currentNoteId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -207,7 +239,7 @@ async function saveNoteContent() {
   if (!currentNoteId) return;
   const content = editor.getValue();
   try {
-    await fetchWorker(`/${currentNoteId}`, {
+    await fetchAPI(`/${currentNoteId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -251,7 +283,7 @@ async function deleteNote() {
   }
   if (confirm("Are you sure you want to delete this note?")) {
     try {
-      await fetchWorker(`/${currentNoteId}`, {
+      await fetchAPI(`/${currentNoteId}`, {
         method: "DELETE",
       });
       window.location.href = "/";
@@ -276,7 +308,7 @@ async function cloneNote() {
     .map(() => Math.random().toString(36)[2])
     .join("");
   try {
-    await fetchWorker(`/${newNoteId}`, {
+    await fetchAPI(`/${newNoteId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
