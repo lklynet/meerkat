@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     if (noteId) {
       // Load existing note
-      const response = await fetchAPI(`/${noteId}`);
+      const response = await fetchWorker(`/${noteId}`);
       const data = await response.json();
       if (data.content) {
         editor.setValue(data.content);
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     } else {
       // Create new note
-      const response = await fetchAPI("/");
+      const response = await fetchWorker("/");
       const data = await response.json();
       if (data.noteId) {
         window.location.href = `/${data.noteId}`;
@@ -166,7 +166,7 @@ function setMode(mode) {
 async function saveModeToDatabase(mode) {
   if (!currentNoteId) return;
   try {
-    await fetchAPI(`/${currentNoteId}`, {
+    await fetchWorker(`/${currentNoteId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -207,7 +207,7 @@ async function saveNoteContent() {
   if (!currentNoteId) return;
   const content = editor.getValue();
   try {
-    await fetchAPI(`/${currentNoteId}`, {
+    await fetchWorker(`/${currentNoteId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -251,7 +251,7 @@ async function deleteNote() {
   }
   if (confirm("Are you sure you want to delete this note?")) {
     try {
-      await fetchAPI(`/${currentNoteId}`, {
+      await fetchWorker(`/${currentNoteId}`, {
         method: "DELETE",
       });
       window.location.href = "/";
@@ -276,7 +276,7 @@ async function cloneNote() {
     .map(() => Math.random().toString(36)[2])
     .join("");
   try {
-    await fetchAPI(`/${newNoteId}`, {
+    await fetchWorker(`/${newNoteId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
