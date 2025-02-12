@@ -1,6 +1,12 @@
 // Initialize CodeMirror
 let editor;
 
+async function fetchWorker(path, options = {}) {
+  const baseUrl = "https://notes2.lkly.net";
+  const url = baseUrl + path;
+  return fetch(url, options);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   // Initialize sidebar state
   const sidebar = document.getElementById("sidebar");
