@@ -39,7 +39,7 @@ docker run -d -p 3000:3000 -v ./data:/app/data ghcr.io/lklynet/meerkat:latest
 - Vanilla JavaScript frontend, no framework
 - Node.js HTTP server, no framework
 - SQLite via node:sqlite
-- CodeMirror 5 for editing, marked.js for rendering
+- CodeMirror 5 for editing, marked.js + highlight.js for rendering
 - ~3 KB of handwritten CSS
 - Minimal Docker image (Alpine)
 
