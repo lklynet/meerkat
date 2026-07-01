@@ -1,29 +1,18 @@
-// Debug initialization
-console.log("Script initialization started");
-console.log("window.ENV available:", !!window.ENV);
-console.log("window.ENV contents:", window.ENV);
+const VIEW_CYCLE = ["split", "edit", "preview"];
+const VIEW_LABELS = { split: "Split", edit: "Edit", preview: "Preview" };
 
-const API_URL = "https://notes-api.leefamous.workers.dev";
-const API_KEY = window.ENV?.API_KEY || "";
-
-// Log API key status
-console.log("API_KEY initialized:", !!API_KEY);
-console.log("API_KEY length:", API_KEY.length);
-console.log("API_KEY is placeholder:", API_KEY === "__API_KEY__");
-
-// Initialize CodeMirror
 let editor;
+let viewMode = "split";
+const currentNoteId = window.location.pathname.substring(1);
 
-// Helper function for API calls
 async function fetchAPI(endpoint, options = {}) {
   const headers = {
-    "X-API-Key": API_KEY,
     "Content-Type": "application/x-www-form-urlencoded",
     ...options.headers,
   };
 
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`/api${endpoint}`, {
       ...options,
       headers,
     });
@@ -40,50 +29,22 @@ async function fetchAPI(endpoint, options = {}) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Initialize sidebar state
-  const sidebar = document.getElementById("sidebar");
-  const toggleButton = document.getElementById("toggle-sidebar");
-  const toggleIcon = toggleButton.querySelector("i");
-  let isSidebarOpen = localStorage.getItem("sidebarOpen") !== "false";
+  const menuButton = document.getElementById("menu-button");
+  const dropdownMenu = document.getElementById("dropdown-menu");
 
-  // Apply initial sidebar state
-  if (!isSidebarOpen) {
-    sidebar.style.transform = "translateX(-100%)";
-    toggleButton.style.left = "0px";
-    toggleIcon.className = "fas fa-chevron-right";
-    const mainContent = document.querySelector(".main-content");
-    mainContent.style.marginLeft = "-270px";
-    mainContent.style.width = "calc(100% + 270px)";
-    const previewContainer = document.getElementById("preview-container");
-    if (previewContainer) {
-      previewContainer.style.marginLeft = mainContent.style.marginLeft;
-      previewContainer.style.width = mainContent.style.width;
-    }
-  }
+  menuButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dropdownMenu.classList.toggle("hidden");
+  });
 
-  // Toggle sidebar function
-  toggleButton.addEventListener("click", () => {
-    isSidebarOpen = !isSidebarOpen;
-    localStorage.setItem("sidebarOpen", isSidebarOpen);
-    sidebar.style.transform = isSidebarOpen ? "translateX(0)" : "translateX(-100%)";
-    toggleButton.style.left = isSidebarOpen ? "270px" : "0px";
-    toggleIcon.className = isSidebarOpen ? "fas fa-chevron-left" : "fas fa-chevron-right";
-    
-    // Update main content area width
-    const mainContent = document.querySelector(".main-content");
-    mainContent.style.marginLeft = isSidebarOpen ? "0px" : "-270px";
-    mainContent.style.width = isSidebarOpen ? "100%" : "calc(100% + 270px)";
-    editor.refresh(); // Refresh CodeMirror to adjust to new width
-    
-    // Update preview container width and margin to match editor container
-    const previewContainer = document.getElementById("preview-container");
-    if (previewContainer) {
-      previewContainer.style.marginLeft = mainContent.style.marginLeft;
-      previewContainer.style.width = mainContent.style.width;
-      previewContainer.style.transition = "width 0.3s ease-in-out, margin-left 0.3s ease-in-out";
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".dropdown")) {
+      dropdownMenu.classList.add("hidden");
     }
   });
-  // Initialize CodeMirror
+
+  setupSplitter();
+
   const textArea = document.getElementById("editor");
   editor = CodeMirror.fromTextArea(textArea, {
     mode: "markdown",
@@ -96,28 +57,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     viewportMargin: Infinity
   });
 
+  document.querySelectorAll(".light-toggle").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const on = btn.classList.toggle("on");
+      const panel = btn.dataset.panel;
+      toggleLight(btn, panel, on);
+    });
+  });
+
   setupEventListeners();
-  const urlParams = new URLSearchParams(window.location.search);
-  // Prioritize server-saved state over localStorage and URL parameters
-  const mode = "edit";
   const noteId = window.location.pathname.substring(1);
 
   try {
     if (noteId) {
-      // Load existing note
       const response = await fetchAPI(`/${noteId}`);
       const data = await response.json();
       if (data.content) {
         editor.setValue(data.content);
-        // Apply server-saved mode state, fallback to localStorage if not available
-        const mode = data.save_state || localStorage.getItem("editorMode") || "edit";
+        const mode = data.save_state || "split";
         setMode(mode);
-        renderPreview(); // Explicitly render preview after content is set
       } else {
         throw new Error("No content received");
       }
     } else {
-      // Create new note
       const response = await fetchAPI("/");
       const data = await response.json();
       if (data.noteId) {
@@ -130,50 +92,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("Failed to initialize note:", error);
     editor.setValue(`Error: ${error.message}`);
     editor.setOption("readOnly", true);
-    document.getElementById("save-status").style.backgroundColor = "#FF4500";
   }
 });
 
-let isEditing = true;
-let debounceTimer;
-const currentNoteId = window.location.pathname.substring(1);
-
 function setupEventListeners() {
-  const previewButton = document.getElementById("preview-button");
-  const editButton = document.getElementById("edit-button");
-  const saveStatus = document.getElementById("save-status");
+  const viewButton = document.getElementById("view-button");
 
-  editor.on("change", debounce(() => {
-    saveStatus.style.backgroundColor = "#FFD700"; // Yellow while saving
-    saveNoteContent()
-      .then(() => {
-        saveStatus.style.backgroundColor = "#32CD32"; // Green on success
-      })
-      .catch(() => {
-        saveStatus.style.backgroundColor = "#FF4500"; // Red on error
-      });
-  }, 500));
-
-  // Preview button
-  previewButton.addEventListener("click", () => {
-    setMode("preview");
-    saveModeToDatabase("preview");
+  editor.on("change", () => {
+    saveNoteContent();
+    if (viewMode === "split") renderPreviewContent();
   });
 
-  // Edit button
-  editButton.addEventListener("click", () => {
-    setMode("edit");
-    saveModeToDatabase("edit");
+  viewButton.addEventListener("click", () => {
+    const idx = VIEW_CYCLE.indexOf(viewMode);
+    const next = VIEW_CYCLE[(idx + 1) % 3];
+    setMode(next);
+    saveModeToDatabase(next);
   });
 
-  // Sidebar actions
   document.getElementById("copy-link").addEventListener("click", copyLink);
   document.getElementById("delete-note").addEventListener("click", deleteNote);
   document.getElementById("new-note").addEventListener("click", newNote);
   document.getElementById("clone-note").addEventListener("click", cloneNote);
   document.getElementById("export-note").addEventListener("click", exportNote);
+  document.getElementById("show-guide").addEventListener("click", showGuide);
 
-  // Keyboard shortcuts
+  const guideModal = document.getElementById("guide-modal");
+  document.getElementById("close-guide").addEventListener("click", () => guideModal.style.display = "none");
+  guideModal.querySelector(".modal-backdrop").addEventListener("click", () => guideModal.style.display = "none");
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") guideModal.style.display = "none";
+  });
+
   document.addEventListener("keydown", (event) => {
     if (event.ctrlKey && event.key === "s") {
       event.preventDefault();
@@ -183,16 +133,85 @@ function setupEventListeners() {
       newNote();
     } else if (event.ctrlKey && event.key === "p") {
       event.preventDefault();
-      setMode(isEditing ? "preview" : "edit");
-      saveModeToDatabase(isEditing ? "preview" : "edit");
+      const idx = VIEW_CYCLE.indexOf(viewMode);
+      const next = VIEW_CYCLE[(idx + 1) % 3];
+      setMode(next);
+      saveModeToDatabase(next);
     }
   });
 }
 
+let splitRatio = 0.5;
+
+function toggleLight(btn, panel, on) {
+  if (panel === "editor") {
+    document.getElementById("editor-container").classList.toggle("light", on);
+    editor.setOption("theme", on ? "default" : "one-dark");
+  } else {
+    document.getElementById("preview-container").classList.toggle("light", on);
+  }
+  btn.querySelector("i").className = on ? "fas fa-lightbulb" : "far fa-lightbulb";
+}
+
+function setupSplitter() {
+  const splitter = document.getElementById("splitter");
+  const editorContainer = document.getElementById("editor-container");
+  const mainContainer = document.getElementById("main-container");
+  let dragging = false;
+
+  splitter.addEventListener("mousedown", () => { dragging = true; });
+  document.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const rect = mainContainer.getBoundingClientRect();
+    splitRatio = (e.clientX - rect.left) / rect.width;
+    editorContainer.style.flex = `0 0 ${splitRatio * 100}%`;
+  });
+  document.addEventListener("mouseup", () => {
+    if (dragging) editor.refresh();
+    dragging = false;
+  });
+}
+
 function setMode(mode) {
-  isEditing = mode === "edit";
-  renderPreview();
+  viewMode = mode;
+  applyView();
   localStorage.setItem("editorMode", mode);
+}
+
+function applyView() {
+  const mainContainer = document.getElementById("main-container");
+  const editorContainer = document.getElementById("editor-container");
+  const previewContainer = document.getElementById("preview-container");
+  const viewButton = document.getElementById("view-button");
+
+  if (viewMode === "split") {
+    mainContainer.classList.add("split");
+    editorContainer.style.display = "";
+    editorContainer.style.flex = `0 0 ${splitRatio * 100}%`;
+    previewContainer.style.display = "";
+    renderPreviewContent();
+  } else if (viewMode === "edit") {
+    mainContainer.classList.remove("split");
+    editorContainer.style.display = "";
+    editorContainer.style.flex = "1";
+    previewContainer.style.display = "none";
+  } else {
+    mainContainer.classList.remove("split");
+    editorContainer.style.flex = "1";
+    editorContainer.style.display = "none";
+    previewContainer.style.display = "";
+    renderPreviewContent();
+  }
+
+  viewButton.textContent = VIEW_LABELS[viewMode];
+  editor.refresh();
+}
+
+function renderPreviewContent() {
+  const preview = document.getElementById("preview");
+  const rawHTML = marked.parse(editor.getValue());
+  const cleanHTML = DOMPurify.sanitize(rawHTML);
+  preview.innerHTML = cleanHTML;
 }
 
 async function saveModeToDatabase(mode) {
@@ -207,31 +226,6 @@ async function saveModeToDatabase(mode) {
     });
   } catch (error) {
     console.error("Failed to save note mode:", error);
-  }
-}
-
-function renderPreview() {
-  const editorContainer = document.getElementById("editor-container");
-  const previewContainer = document.getElementById("preview-container");
-  const editButton = document.getElementById("edit-button");
-  const previewButton = document.getElementById("preview-button");
-
-  if (isEditing) {
-    editorContainer.style.display = "block";
-    previewContainer.style.display = "none";
-    editButton.style.display = "none";
-    previewButton.style.display = "inline-block";
-    editor.refresh(); // Refresh CodeMirror when switching to edit mode
-  } else {
-    const preview = document.getElementById("preview");
-    const rawHTML = marked.parse(editor.getValue());
-    const cleanHTML = DOMPurify.sanitize(rawHTML);
-    preview.innerHTML = cleanHTML;
-
-    editorContainer.style.display = "none";
-    previewContainer.style.display = "block";
-    editButton.style.display = "inline-block";
-    previewButton.style.display = "none";
   }
 }
 
@@ -252,11 +246,8 @@ async function saveNoteContent() {
   }
 }
 
-function debounce(func, delay) {
-  return function () {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => func.apply(this, arguments), delay);
-  };
+function showGuide() {
+  document.getElementById("guide-modal").style.display = "flex";
 }
 
 function copyLink() {

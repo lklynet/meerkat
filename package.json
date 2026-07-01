@@ -1,0 +1,11 @@
+{
+  "name": "meerkat",
+  "private": true,
+  "type": "module",
+  "description": "Minimalist Markdown notepad — self-hosted Docker deployment",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {}
+}

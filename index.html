@@ -1,110 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-85LBR0M6FY"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-85LBR0M6FY');
-    </script>
     <meta charset="UTF-8" />
-    <title>Markdown Notepad</title>
-
-    <!-- Environment Variables - Must be first -->
-    <script>
-      window.ENV = {
-        API_KEY: "__API_KEY__",
-      };
-    </script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2132427186104077"
-     crossorigin="anonymous"></script>
-    <!-- Third-party Scripts -->
-    <script src="https://post.lkly.net/inject.js"></script>
+    <title>meerkat</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link href="/src/output.css" rel="stylesheet" />
+    <link href="/css/meerkat.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/dompurify@2.2.8/dist/purify.min.js"></script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
-    <link rel="stylesheet" href="https://use.typekit.net/bop8ekr.css" />
-    <!-- CodeMirror -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/one-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/default.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/markdown/markdown.min.js"></script>
-    <style>
-      .CodeMirror {
-        background-color: rgb(31 41 55) !important;
-        height: 100% !important;
-        color: #abb2bf !important;
-        word-wrap: break-word !important;
-        white-space: pre-wrap !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        overflow-x: hidden !important;
-      }
-      .CodeMirror-gutters {
-        background-color: rgb(31 41 55) !important;
-        border-right: 1px solid rgb(75 85 99) !important;
-      }
-      .cm-header { color: #e06c75 !important; }
-      .cm-quote { color: #98c379 !important; }
-      .cm-link { color: #61afef !important; }
-      .cm-url { color: #56b6c2 !important; }
-      .cm-strong { color: #d19a66 !important; }
-      .cm-em { color: #c678dd !important; }
-      .cm-string { color: #98c379 !important; }
-      .cm-comment { color: #5c6370 !important; }
-      .cm-list { color: #e06c75 !important; }
-    </style>
   </head>
-  <body
-    class="flex flex-col md:flex-row h-screen overflow-hidden font-mono rounded bg-gray-900 text-gray-300 text-sm"
-  >
-  <button
-  id="toggle-sidebar"
-  class="text-gray-400 hover:text-gray-200 transition-all duration-300 absolute top-2 p-2 rounded-r z-10"
-  style="left: 270px"
->
-  <i class="fas fa-chevron-left"></i>
-</button>
-    <div
-      id="sidebar"
-      class="w-74 min-w-74 bg-gray-900 overflow-hidden p-2 box-border transition-transform duration-300 ease-in-out relative"
-    >
-      <div class="flex items-center p-2 bg-gray-900 box-border">
-        
-        <div
-          class="flex-grow text-center text-md font-bold cursor-pointer"
-          onclick="window.location.href='https://lkly.net';"
-        >
-          [>_ ] lkly/notes
+  <body>
+    <div id="top-bar">
+      <div id="app-title">meerkat</div>
+      <div id="top-bar-actions">
+        <button id="view-button" class="btn-top">Split</button>
+        <button id="show-guide" class="btn-top"><i class="fas fa-question-circle"></i></button>
+        <div class="dropdown">
+          <button id="menu-button" class="btn-top" aria-label="Menu"><i class="fas fa-bars"></i></button>
+          <div id="dropdown-menu" class="dropdown-content hidden">
+            <button id="new-note">New</button>
+            <button id="clone-note">Clone</button>
+            <button id="copy-link">Copy Link</button>
+            <button id="export-note">Export</button>
+            <hr>
+            <button id="delete-note" class="danger">Delete</button>
+          </div>
         </div>
       </div>
-      <div
-        id="markdown-guide-container"
-        class="flex-grow overflow-y-auto bg-neutral-900 h-[calc(100vh-150px)]">
-        <div
-          id="markdown-guide"
-          class="p-2 bg-gray-800 rounded leading-relaxed break-words"
-        >
-          <h2 class="text-lg font-bold mb-2">Markdown Guide</h2>
-          <h3 class="font-semibold mt-4 mb-1">Headers</h3>
+    </div>
+    <div id="main-container">
+      <div id="editor-container">
+        <button class="light-toggle" data-panel="editor" title="Toggle light mode"><i class="far fa-lightbulb"></i></button>
+        <textarea id="editor"></textarea>
+      </div>
+      <div id="splitter"></div>
+      <div id="preview-container">
+        <button class="light-toggle" data-panel="preview" title="Toggle light mode"><i class="far fa-lightbulb"></i></button>
+        <div id="preview"></div>
+      </div>
+    </div>
+    <div id="guide-modal" class="modal" style="display:none">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Markdown Guide</h2>
+          <button id="close-guide" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <h3>Headers</h3>
           <p>Use <code>#</code> for headers:</p>
           <pre><code># H1 Header
 ## H2 Header
 ### H3 Header</code></pre>
 
-          <h3 class="font-semibold mt-4 mb-1">Emphasis</h3>
+          <h3>Emphasis</h3>
           <pre><code>*Italic text*
 **Bold text**
 ***Bold and italic***</code></pre>
 
-          <h3 class="font-semibold mt-4 mb-1">Lists</h3>
+          <h3>Lists</h3>
           <pre><code>- Unordered item
   - Nested item
 - Another item
@@ -113,11 +74,11 @@
 2. Second item
    1. Nested ordered item</code></pre>
 
-          <h3 class="font-semibold mt-4 mb-1">Links and Images</h3>
+          <h3>Links and Images</h3>
           <pre><code>[Link text](https://example.com)
 ![Alt text](image_url)</code></pre>
 
-          <h3 class="font-semibold mt-4 mb-1">Code</h3>
+          <h3>Code</h3>
           <p>Inline code and code blocks:</p>
           <pre><code>`Inline code`
 
@@ -126,15 +87,15 @@
 console.log('Hello, world!');
 ```</code></pre>
 
-          <h3 class="font-semibold mt-4 mb-1">Blockquotes</h3>
+          <h3>Blockquotes</h3>
           <p>Create blockquotes:</p>
           <pre><code>> This is a blockquote.</code></pre>
 
-          <h3 class="font-semibold mt-4 mb-1">Horizontal Rule</h3>
+          <h3>Horizontal Rule</h3>
           <p>Add a horizontal rule:</p>
           <pre><code>---</code></pre>
 
-          <h3 class="font-semibold mt-4 mb-1">Tables</h3>
+          <h3>Tables</h3>
           <p>Create tables:</p>
           <pre><code>| Column 1 | Column 2 |
 | -------- | -------- |
@@ -142,87 +103,7 @@ console.log('Hello, world!');
 | Row 2    | Data     |</code></pre>
         </div>
       </div>
-      <div
-        class="sidebar-buttons flex flex-wrap gap-2 p-2 bg-gray-900 sticky bottom-0"
-      >
-        <button
-          id="new-note"
-          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-gray-700 text-gray-300 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-gray-600"
-        >
-          <i class="fas fa-plus-square"></i> New
-        </button>
-        <button
-          id="copy-link"
-          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-gray-700 text-gray-300 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-gray-600"
-        >
-          <i class="fas fa-link"></i> Copy Link
-        </button>
-        <button
-          id="clone-note"
-          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-gray-700 text-gray-300 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-gray-600"
-        >
-          <i class="fas fa-clone"></i> Clone
-        </button>
-        <button
-          id="delete-note"
-          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-gray-700 text-gray-300 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-gray-600"
-        >
-          <i class="fas fa-trash"></i> Delete
-        </button>
-        <button
-          id="export-note"
-          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-gray-700 text-gray-300 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-gray-600"
-        >
-          <i class="fas fa-download"></i> Export
-        </button>
-        <button
-          class="flex-1 basis-[calc(50%-0.5rem)] p-2 cursor-pointer bg-gray-700 text-gray-100 rounded text-center transition-colors duration-300 text-xs font-bold hover:bg-pink-600"
-        >
-          <a href="https://buymeacoffee.com/lkly" target="_blank"
-            >Buy me a coffee! ☕</a
-          >
-          &nbsp;|&nbsp;
-          <a href="https://x.com/itslkly" target="_blank">@itslkly</a>
-        </button>
-      </div>
     </div>
-    <div
-      id="main-container"
-      class="flex-grow flex flex-col transition-width duration-300 ease-in-out max-w-screen-xl mx-auto"
-    >
-      <div
-        class="top-bar flex justify-end items-center p-2 bg-gray-900 relative"
-      >
-        <span
-          id="save-status"
-          class="w-2 h-2 rounded-full bg-green-500 mr-2"
-        ></span>
-        <button
-          id="edit-button"
-          class="bg-gray-700 text-gray-100 border border-gray-600 rounded px-2 py-1 ml-2 cursor-pointer text-xs hover:bg-gray-600"
-          style="display: none"
-        >
-          Edit
-        </button>
-        <button
-          id="preview-button"
-          class="bg-gray-700 text-gray-100 border border-gray-600 rounded px-2 py-1 ml-2 cursor-pointer text-xs hover:bg-gray-600"
-        >
-          Preview
-        </button>
-      </div>
-      <div id="editor-container" class="w-full h-[calc(100vh-50px)] bg-gray-900 main-content overflow-hidden">
-        <textarea
-          id="editor"
-          class="w-full h-full bg-gray-900 text-gray-300 p-4 box-border text-sm rounded font-mono resize-none border-none overflow-x-hidden whitespace-pre-wrap"
-        ></textarea>
-      </div>
-      <div id="preview-container" class="w-full h-[calc(100vh-50px)] bg-gray-900 main-content overflow-y-auto">
-        <div id="preview" class="prose prose-invert max-w-none p-4">
-      </div>
-    </div>
-
-    <!-- Main Script -->
     <script src="scripts.js"></script>
   </body>
 </html>
